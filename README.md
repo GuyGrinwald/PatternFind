@@ -1,2 +1,2 @@
-# https---github.com-GuyGrinwald-PatternFind
+# PatternFind
 A pattern extraction tool.
