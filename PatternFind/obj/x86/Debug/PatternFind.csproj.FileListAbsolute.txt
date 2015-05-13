@@ -1,0 +1,10 @@
+C:\Users\User\documents\visual studio 2010\Projects\PatternFind\PatternFind\bin\Debug\PatternFind.exe
+C:\Users\User\documents\visual studio 2010\Projects\PatternFind\PatternFind\bin\Debug\PatternFind.pdb
+C:\Users\User\documents\visual studio 2010\Projects\PatternFind\PatternFind\obj\x86\Debug\PatternFind.exe
+C:\Users\User\documents\visual studio 2010\Projects\PatternFind\PatternFind\obj\x86\Debug\PatternFind.pdb
+C:\Users\User\documents\visual studio 2010\Projects\PatternFind\PatternFind\obj\x86\Debug\PatternFind.csprojResolveAssemblyReference.cache
+C:\Users\guy.grinwald\Desktop\PatternFind\PatternFind\obj\x86\Debug\PatternFind.exe
+C:\Users\guy.grinwald\Desktop\PatternFind\PatternFind\obj\x86\Debug\PatternFind.pdb
+C:\Users\guy.grinwald\Desktop\PatternFind\PatternFind\bin\Debug\PatternFind.exe
+C:\Users\guy.grinwald\Desktop\PatternFind\PatternFind\bin\Debug\PatternFind.pdb
+C:\Users\guy.grinwald\Desktop\PatternFind\PatternFind\obj\x86\Debug\PatternFind.csprojResolveAssemblyReference.cache
