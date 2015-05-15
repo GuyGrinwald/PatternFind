@@ -30,7 +30,7 @@ namespace PatternFind
 
                 while ((sentence = sr.ReadLine()) != null)
                 {
-                    FindPatternsIterative(sentence);
+                    FindMatchingPatterns(sentence);
                 }
 
                 return patterns;
@@ -43,40 +43,41 @@ namespace PatternFind
         /// </summary>
         /// <param name="sentences"></param>
         /// <returns>Returns a list of PatternHolders for the patterns in the given list.</returns>
-        private void FindPatternsIterative(string sentence)
+        private void FindMatchingPatterns(string sentence)
         {
             // remove timestamp from sentence
             var sanitizedSentence = SanitizeSentence(sentence);
 
-            // if there are no patterns then the new sentence is always a pattern
+            // if there are no patterns then the new sentence is a pattern
             if (!patterns.Any())
             {
-                var firstPattern = new PatternHolder(sanitizedSentence, new List<string>() { sanitizedSentence }, new List<string>());
+                var firstPattern = new PatternHolder(sanitizedSentence, new List<string>() { sentence }, new List<string>());
                 patterns.Add(firstPattern);
                 return;
             }
 
-            // find the right patterns for the sentence
-            var matches = patterns.Where(ptternHolder => FindDiffWords(ptternHolder.pattern, sanitizedSentence).wordIndex >= 0);
+            // filter the right patterns for the sentence
+            var matches = patterns.Where(patternHolder => SentenceMatchPattern(patternHolder, sanitizedSentence));
 
             if (matches.Any())
             {
-                // for each matching pattern add the sentence to it's group
+                // for each matching pattern add the sentence to it's patternHolder
                 foreach (var match in matches)
                 {
-                    var diffWords = FindDiffWords(match.pattern, sanitizedSentence);
+                    var diffWords = FindFirstDiffWords(match.pattern, sanitizedSentence);
 
+                    // handels the case for the first pattern found - adds it's word to the patternHolder
                     if (match.words.Count == 0)
                         match.words.Add(diffWords.diffWordInFirstSentence);
 
                     match.words.Add(diffWords.diffWordInSecondSentence);
-                    match.sentences.Add(sanitizedSentence);
+                    match.sentences.Add(sentence);
                 }
             }
             else
             {
                 // insert new pattern
-                PatternHolder newPattern = new PatternHolder(sanitizedSentence, new List<string>() { sanitizedSentence }, new List<string>());
+                PatternHolder newPattern = new PatternHolder(sanitizedSentence, new List<string>() { sentence }, new List<string>());
                 patterns.Add(newPattern);
             }
         }
@@ -96,34 +97,50 @@ namespace PatternFind
         }
 
         /// <summary>
-        /// Finds the two different words between the two given strings.
+        /// Checks if the given sentence matches the given pattern
+        /// </summary>
+        /// <param name="patternHolder"></param>
+        /// <param name="sentence"></param>
+        /// <returns>Returns true if the sentence matches the pattern</returns>
+        private bool SentenceMatchPattern(PatternHolder patternHolder, string sentence)
+        {
+            if (string.IsNullOrEmpty(sentence) || string.IsNullOrEmpty(patternHolder.pattern))
+                return false;
+
+            if (patternHolder.sentences.Any(orig => SanitizeSentence(orig).Equals(sentence)))
+                return true;
+
+            var patternWords = patternHolder.pattern.Split(' ');
+            var sentenceWords = sentence.Split(' ');
+
+            if (patternWords.Length != sentenceWords.Length)
+                return false;
+
+            var patternMatch = FindFirstDiffWords(patternHolder.pattern, sentence).wordIndex >= 0;
+                        
+            return patternMatch;
+        }
+
+        /// <summary>
+        /// Finds first different word in each string and it's index.
         /// The function assumes the input is a grammical proper english sentence.
         /// </summary>
         /// <param name="phrase1"></param>
         /// <param name="phrase2"></param>
-        /// <returns>Returns a struct containg the different words and their index in the sentence. If none is found it returns an empty struct.</returns>
-        private DiffWords FindDiffWords(string phrase1, string phrase2)
+        /// <returns>Returns a struct containg the first different word in each sentence and it's index. If none is found it returns an empty struct.</returns>
+        private DiffWords FindFirstDiffWords(string phrase1, string phrase2)
         {
             var res = new DiffWords();
             res.wordIndex = -1;
 
-            if (phrase1 == null || phrase2 == null)
-            {
-                throw new ArgumentNullException("Phrases can not be null!");
-            }
-
             var phrase1Words = phrase1.Split(' ');
             var phrase2Words = phrase2.Split(' ');
-
-            var wordsInPhrase1and2 = phrase1Words.Intersect(phrase2Words);
+           
             var phrase1WordsCount = phrase1Words.Count();
             var phrase2WordsCount = phrase2Words.Count();
-            var wordsInPhrase1and2Count = wordsInPhrase1and2.Count();
 
-            if (phrase1WordsCount != phrase2WordsCount)
-            {
-                return res;
-            }
+            var wordsInPhrase1and2 = phrase1Words.Intersect(phrase2Words);
+            var wordsInPhrase1and2Count = wordsInPhrase1and2.Count();
 
             if ((wordsInPhrase1and2Count == phrase1WordsCount - 1) && wordsInPhrase1and2Count > 0)
             {
