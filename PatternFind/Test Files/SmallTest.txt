@@ -1,0 +1,6 @@
+12-01-2015 08:40:30 Naomi is getting into the car
+12-01-2015 08:40:30 George is getting into the car
+12-01-2015 09:43:30 George is eating at a diner
+12-01-2015 09:42:50 Naomi is eating at a restaurant
+12-01-2015 09:44:47 Naomi is drinking at a restaurant
+12-01-2015 10:26:12 Naomi is getting into the car

@@ -9,7 +9,7 @@ namespace PatternFind
     class PatternFinder
     {
         // holds the patterns for the solution
-        private List<PatternHolder> patterns;
+        private List<PatternHolder> patterns = new List<PatternHolder>();
 
         // regex that checks for timestamp dd-MM-yyyy hh:mm:ss {rest of sentence}
         private const string TIME_STAMP_PREFIX_REGEX = @"^\d{2}-\d{2}-\d{4}\s\d{2}:\d{2}:\d{2}\s";
@@ -53,6 +53,7 @@ namespace PatternFind
             {
                 var firstPattern = new PatternHolder(sanitizedSentence, new List<string>() { sanitizedSentence }, new List<string>());
                 patterns.Add(firstPattern);
+                return;
             }
 
             // find the right patterns for the sentence
@@ -63,19 +64,19 @@ namespace PatternFind
                 // for each matching pattern add the sentence to it's group
                 foreach (var match in matches)
                 {
-                    var diffWords = FindDiffWords(match.pattern, sentence);
+                    var diffWords = FindDiffWords(match.pattern, sanitizedSentence);
 
                     if (match.words.Count == 0)
                         match.words.Add(diffWords.diffWordInFirstSentence);
 
                     match.words.Add(diffWords.diffWordInSecondSentence);
-                    match.sentences.Add(sentence);
+                    match.sentences.Add(sanitizedSentence);
                 }
             }
             else
             {
                 // insert new pattern
-                PatternHolder newPattern = new PatternHolder(sentence, new List<string>() { sentence }, new List<string>());
+                PatternHolder newPattern = new PatternHolder(sanitizedSentence, new List<string>() { sanitizedSentence }, new List<string>());
                 patterns.Add(newPattern);
             }
         }
@@ -126,8 +127,8 @@ namespace PatternFind
 
             if ((wordsInPhrase1and2Count == phrase1WordsCount - 1) && wordsInPhrase1and2Count > 0)
             {
-                res.diffWordInFirstSentence = phrase1Words.Except(wordsInPhrase1and2).First();
-                res.diffWordInSecondSentence = phrase2Words.Except(wordsInPhrase1and2).First();
+                res.diffWordInFirstSentence = phrase1Words.Except(wordsInPhrase1and2).Single();
+                res.diffWordInSecondSentence = phrase2Words.Except(wordsInPhrase1and2).Single();
 
                 if (Array.IndexOf(phrase1Words, res.diffWordInFirstSentence) == Array.IndexOf(phrase2Words, res.diffWordInSecondSentence))
                 {

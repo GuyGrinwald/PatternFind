@@ -8,3 +8,8 @@ C:\Users\guy.grinwald\Desktop\PatternFind\PatternFind\obj\x86\Debug\PatternFind.
 C:\Users\guy.grinwald\Desktop\PatternFind\PatternFind\bin\Debug\PatternFind.exe
 C:\Users\guy.grinwald\Desktop\PatternFind\PatternFind\bin\Debug\PatternFind.pdb
 C:\Users\guy.grinwald\Desktop\PatternFind\PatternFind\obj\x86\Debug\PatternFind.csprojResolveAssemblyReference.cache
+C:\Source Code\C#\PatternFind\PatternFind\obj\x86\Debug\PatternFind.exe
+C:\Source Code\C#\PatternFind\PatternFind\obj\x86\Debug\PatternFind.pdb
+C:\Source Code\C#\PatternFind\PatternFind\bin\Debug\PatternFind.exe
+C:\Source Code\C#\PatternFind\PatternFind\bin\Debug\PatternFind.pdb
+C:\Source Code\C#\PatternFind\PatternFind\obj\x86\Debug\PatternFind.csprojResolveAssemblyReference.cache
