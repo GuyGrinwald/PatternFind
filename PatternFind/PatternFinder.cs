@@ -45,6 +45,11 @@ namespace PatternFind
         /// <returns>Returns a list of PatternHolders for the patterns in the given list.</returns>
         private void FindMatchingPatterns(string sentence)
         {
+            if (string.IsNullOrEmpty(sentence))
+            {
+                return;
+            }
+
             // remove timestamp from sentence
             var sanitizedSentence = SanitizeSentence(sentence);
 
@@ -57,7 +62,7 @@ namespace PatternFind
             }
 
             // filter the right patterns for the sentence
-            var matches = patterns.Where(patternHolder => SentenceMatchPattern(patternHolder, sanitizedSentence));
+            var matches = patterns.Where(patternHolder => IsSentenceMatchPattern(patternHolder, sanitizedSentence));
 
             if (matches.Any())
             {
@@ -92,7 +97,6 @@ namespace PatternFind
         /// <returns></returns>
         private string SanitizeSentence(string sentence)
         {
-            // take the sentence without the timestamp if timestamp is found
             return sanitizeDateRegex.Replace(sentence, ""); ;
         }
 
@@ -102,9 +106,9 @@ namespace PatternFind
         /// <param name="patternHolder"></param>
         /// <param name="sentence"></param>
         /// <returns>Returns true if the sentence matches the pattern</returns>
-        private bool SentenceMatchPattern(PatternHolder patternHolder, string sentence)
+        private bool IsSentenceMatchPattern(PatternHolder patternHolder, string sentence)
         {
-            if (string.IsNullOrEmpty(sentence) || string.IsNullOrEmpty(patternHolder.pattern))
+            if (string.IsNullOrEmpty(patternHolder.pattern) || string.IsNullOrEmpty(sentence))
                 return false;
 
             // if the sentence already exists in the pattern then the new copy of it also matches the pattern
@@ -136,6 +140,11 @@ namespace PatternFind
         {
             var res = new DiffWords();
             res.wordIndex = -1;
+
+            if (string.IsNullOrEmpty(phrase1) || string.IsNullOrEmpty(phrase2))
+            { 
+                return res;
+            }
 
             var phrase1Words = phrase1.Split(' ');
             var phrase2Words = phrase2.Split(' ');
