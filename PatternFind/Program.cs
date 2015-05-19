@@ -47,7 +47,11 @@ namespace PatternFind
         /// <param name="pattern"></param>
         private static void PrintPattern(PatternHolder pattern)
         {
-            pattern.sentences.ForEach(sentence => Console.WriteLine(sentence));
+            foreach (var sentence in pattern.sentences)
+            {
+                Console.WriteLine(sentence);
+            }
+
             Console.WriteLine(String.Format("The changing word was: {0}", string.Join(", ", pattern.words)));
             Console.WriteLine();
         }

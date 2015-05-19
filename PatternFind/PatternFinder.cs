@@ -180,15 +180,15 @@ namespace PatternFind
     struct PatternHolder
     {
         public string pattern { get; set; }
-        public List<string> sentences { get; set; }
-        public List<string> words { get; set; }
+        public ICollection<string> sentences { get; set; }
+        public ICollection<string> words { get; set; }
 
         public PatternHolder(string newPattern, ICollection<string> newSentences, ICollection<string> newWords)
             : this()
         {
             this.pattern = newPattern;
-            this.sentences = newSentences.ToList();
-            this.words = newWords.ToList();
+            this.sentences = newSentences;
+            this.words = newWords;
         }
     }
 }
