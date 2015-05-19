@@ -116,12 +116,6 @@ namespace PatternFind
             if (sanitizedSentences.Any(sanitizedSentence => sanitizedSentence.Equals(sentence)))
                 return true;
 
-            var patternWords = patternHolder.pattern.Split(' ');
-            var sentenceWords = sentence.Split(' ');
-
-            if (patternWords.Length != sentenceWords.Length)
-                return false;
-
             // the sentence matches the pattern iff they have only one word that differs between them in the same location;
             var diffWordsInPattern = FindDiffWord(patternHolder.pattern, sentence);
             var patternMatch = diffWordsInPattern.wordIndex >= 0;
@@ -148,22 +142,21 @@ namespace PatternFind
 
             var phrase1Words = phrase1.Split(' ');
             var phrase2Words = phrase2.Split(' ');
-           
-            var phrase1WordsCount = phrase1Words.Count();
-            var phrase2WordsCount = phrase2Words.Count();
 
-            var wordsInPhrase1and2 = phrase1Words.Intersect(phrase2Words);
-            var wordsInPhrase1and2Count = wordsInPhrase1and2.Count();
+            if (phrase1Words.Length != phrase2Words.Length)
+            { 
+                return res;
+            }
 
-            if ((wordsInPhrase1and2Count == phrase1WordsCount - 1) && wordsInPhrase1and2Count > 0)
+            // create tuples of words form each collection and their index and filters those whose words are not the same
+            var wordPairs = phrase1Words.Select((word, index) => new { wordInPhrase1 = word, wordInPhrase2 = phrase2Words[index], wordIndex = index });
+            var diffWords = wordPairs.Where(wordPair => !wordPair.wordInPhrase1.Equals(wordPair.wordInPhrase2));
+
+            if (diffWords.Count() == 1)
             {
-                res.diffWordInFirstSentence = phrase1Words.Except(wordsInPhrase1and2).Single();
-                res.diffWordInSecondSentence = phrase2Words.Except(wordsInPhrase1and2).Single();
-
-                if (Array.IndexOf(phrase1Words, res.diffWordInFirstSentence) == Array.IndexOf(phrase2Words, res.diffWordInSecondSentence))
-                {
-                    res.wordIndex = Array.IndexOf(phrase2Words, res.diffWordInSecondSentence);
-                }
+                res.diffWordInFirstSentence = diffWords.First().wordInPhrase1;
+                res.diffWordInSecondSentence = diffWords.First().wordInPhrase2;
+                res.wordIndex = diffWords.First().wordIndex;
             }
 
             return res;
