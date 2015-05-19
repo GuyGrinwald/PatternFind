@@ -64,7 +64,7 @@ namespace PatternFind
                 // for each matching pattern add the sentence to it's patternHolder
                 foreach (var match in matches)
                 {
-                    var diffWords = FindFirstDiffWords(match.pattern, sanitizedSentence);
+                    var diffWords = FindDiffWord(match.pattern, sanitizedSentence);
 
                     // handels the case for the first pattern found - adds it's word to the patternHolder
                     if (match.words.Count == 0)
@@ -107,7 +107,9 @@ namespace PatternFind
             if (string.IsNullOrEmpty(sentence) || string.IsNullOrEmpty(patternHolder.pattern))
                 return false;
 
-            if (patternHolder.sentences.Any(orig => SanitizeSentence(orig).Equals(sentence)))
+            // if the sentence already exists in the pattern then the new copy of it also matches the pattern
+            var sanitizedSentences = patternHolder.sentences.Select(original => SanitizeSentence(original));
+            if (sanitizedSentences.Any(sanitizedSentence => sanitizedSentence.Equals(sentence)))
                 return true;
 
             var patternWords = patternHolder.pattern.Split(' ');
@@ -116,7 +118,9 @@ namespace PatternFind
             if (patternWords.Length != sentenceWords.Length)
                 return false;
 
-            var patternMatch = FindFirstDiffWords(patternHolder.pattern, sentence).wordIndex >= 0;
+            // the sentence matches the pattern iff they have only one word that differs between them in the same location;
+            var diffWordsInPattern = FindDiffWord(patternHolder.pattern, sentence);
+            var patternMatch = diffWordsInPattern.wordIndex >= 0;
                         
             return patternMatch;
         }
@@ -128,7 +132,7 @@ namespace PatternFind
         /// <param name="phrase1"></param>
         /// <param name="phrase2"></param>
         /// <returns>Returns a struct containg the first different word in each sentence and it's index. If none is found it returns an empty struct.</returns>
-        private DiffWords FindFirstDiffWords(string phrase1, string phrase2)
+        private DiffWords FindDiffWord(string phrase1, string phrase2)
         {
             var res = new DiffWords();
             res.wordIndex = -1;
