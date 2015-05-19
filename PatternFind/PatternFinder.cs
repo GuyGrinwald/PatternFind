@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -19,7 +20,7 @@ namespace PatternFind
                    RegexOptions.Singleline | RegexOptions.Compiled);
 
         /// <summary>
-        /// Iterates thtough all of the lines in the file and finds and stores 
+        /// Iterates thtough all of the lines in the file and finds and stores the patterns
         /// </summary>
         /// <param name="path"></param>
         public IEnumerable<PatternHolder> FindPatternsInFile(string path)
@@ -30,7 +31,8 @@ namespace PatternFind
 
                 while ((sentence = sr.ReadLine()) != null)
                 {
-                    FindMatchingPatterns(sentence);
+                    var matchingPatterns = FindMatchingPatterns(sentence);
+                    AddSenteceToPatterns(matchingPatterns, sentence);
                 }
 
                 return patterns;
@@ -38,52 +40,78 @@ namespace PatternFind
         }
 
         /// <summary>
-        /// Finds all of the patterns in the given list of sentences and for each pattern the
-        /// sentences related to it and words that change between sentences.
+        /// Finds all of the patterns that match the given sentence
         /// </summary>
         /// <param name="sentences"></param>
-        /// <returns>Returns a list of PatternHolders for the patterns in the given list.</returns>
-        private void FindMatchingPatterns(string sentence)
+        /// <returns>Returns an enumerable of PatternHolders that match the given sentence.</returns>
+        private IEnumerable<PatternHolder> FindMatchingPatterns(string sentence)
         {
+            List<PatternHolder> matches = new List<PatternHolder>();
+
             if (string.IsNullOrEmpty(sentence))
             {
-                return;
+                return matches;
             }
 
             // remove timestamp from sentence
             var sanitizedSentence = SanitizeSentence(sentence);
 
-            // if there are no patterns then the new sentence is a pattern
-            if (!patterns.Any())
+            // filter the right patterns for the sentence
+            matches = patterns.FindAll(patternHolder => IsSentenceMatchPattern(patternHolder, sanitizedSentence));
+
+            // create new pattern if no matching pattern exists
+            if (!matches.Any())
             {
-                var firstPattern = new PatternHolder(sanitizedSentence, new List<string>() { sentence }, new List<string>());
-                patterns.Add(firstPattern);
+                var newPattern = new PatternHolder(sanitizedSentence, new List<string>(), new List<string>());
+                patterns.Add(newPattern);
+                matches.Add(newPattern);
+            }
+
+            return matches;
+        }
+
+        /// <summary>
+        /// Adds the given sentence to the given pattern
+        /// </summary>
+        /// <param name="matchingPatterns"></param>
+        /// <param name="sentence"></param>
+        private void AddSenteceToPatterns(IEnumerable<PatternHolder> matchingPatterns, string sentence)
+        {
+            if (!matchingPatterns.Any() || string.IsNullOrEmpty(sentence))
+            {
                 return;
             }
 
-            // filter the right patterns for the sentence
-            var matches = patterns.Where(patternHolder => IsSentenceMatchPattern(patternHolder, sanitizedSentence));
+            var sanitizedSentence = SanitizeSentence(sentence);
 
-            if (matches.Any())
+            // for each matching pattern add the sentence to it's patternHolder
+            foreach (var match in matchingPatterns)
             {
-                // for each matching pattern add the sentence to it's patternHolder
-                foreach (var match in matches)
+                int diffWordIndex = FindDiffWord(match.pattern, sanitizedSentence);
+                var patternWords = match.pattern.Split(' ');
+                var sentenceWords = sanitizedSentence.Split(' ');
+
+                // ignore duplicate sentences
+                var sanitizedSentences = match.sentences.Select(original => SanitizeSentence(original));
+                if (sanitizedSentences.Contains(sanitizedSentence))
+                    return;
+
+                // if the pattern is new just add the sentence to it - we cant know the diff word yet
+                if (match.sentences.Count == 0)
                 {
-                    var diffWords = FindDiffWord(match.pattern, sanitizedSentence);
-
-                    // handels the case for the first pattern found - adds it's word to the patternHolder
-                    if (match.words.Count == 0)
-                        match.words.Add(diffWords.diffWordInFirstSentence);
-
-                    match.words.Add(diffWords.diffWordInSecondSentence);
                     match.sentences.Add(sentence);
+                    return;
                 }
-            }
-            else
-            {
-                // insert new pattern
-                PatternHolder newPattern = new PatternHolder(sanitizedSentence, new List<string>() { sentence }, new List<string>());
-                patterns.Add(newPattern);
+
+                // handels the case for the first pattern found - adds it's word to the patternHolder
+                if (match.words.Count == 0)
+                {
+                    match.words.Add(patternWords[diffWordIndex]);
+                }
+
+                match.words.Add(sentenceWords[diffWordIndex]);
+
+                match.sentences.Add(sentence);
             }
         }
 
@@ -113,39 +141,38 @@ namespace PatternFind
 
             // if the sentence already exists in the pattern then the new copy of it also matches the pattern
             var sanitizedSentences = patternHolder.sentences.Select(original => SanitizeSentence(original));
-            if (sanitizedSentences.Any(sanitizedSentence => sanitizedSentence.Equals(sentence)))
+            if (sanitizedSentences.Contains(sentence))
                 return true;
 
             // the sentence matches the pattern iff they have only one word that differs between them in the same location;
-            var diffWordsInPattern = FindDiffWord(patternHolder.pattern, sentence);
-            var patternMatch = diffWordsInPattern.wordIndex >= 0;
+            var diffWordsIndex = FindDiffWord(patternHolder.pattern, sentence);
+            var patternMatch = diffWordsIndex >= 0;
                         
             return patternMatch;
         }
 
         /// <summary>
-        /// Finds first different word in each string and it's index.
+        /// Finds the only different word in each string and it's index.
         /// The function assumes the input is a grammical proper english sentence.
         /// </summary>
         /// <param name="phrase1"></param>
         /// <param name="phrase2"></param>
-        /// <returns>Returns a struct containg the first different word in each sentence and it's index. If none is found it returns an empty struct.</returns>
-        private DiffWords FindDiffWord(string phrase1, string phrase2)
+        /// <returns>Returns a struct containg the only different word in each sentence and it's index. If none is found or there are more then one it returns an empty struct.</returns>
+        private int FindDiffWord(string phrase1, string phrase2)
         {
-            var res = new DiffWords();
-            res.wordIndex = -1;
+            int diffWordLocation = -1;
 
             if (string.IsNullOrEmpty(phrase1) || string.IsNullOrEmpty(phrase2))
-            { 
-                return res;
+            {
+                return diffWordLocation;
             }
 
             var phrase1Words = phrase1.Split(' ');
             var phrase2Words = phrase2.Split(' ');
 
             if (phrase1Words.Length != phrase2Words.Length)
-            { 
-                return res;
+            {
+                return diffWordLocation;
             }
 
             // create tuples of words form each collection and their index and filters those whose words are not the same
@@ -154,34 +181,25 @@ namespace PatternFind
 
             if (diffWords.Count() == 1)
             {
-                res.diffWordInFirstSentence = diffWords.First().wordInPhrase1;
-                res.diffWordInSecondSentence = diffWords.First().wordInPhrase2;
-                res.wordIndex = diffWords.First().wordIndex;
+                diffWordLocation = diffWords.First().wordIndex;
             }
 
-            return res;
+            return diffWordLocation;
         }
-    }
-
-    struct DiffWords
-    {
-        public string diffWordInFirstSentence { get; set; }
-        public string diffWordInSecondSentence { get; set; }
-        public int wordIndex { get; set; }
     }
 
     struct PatternHolder
     {
         public string pattern { get; set; }
-        public ICollection<string> sentences { get; set; }
-        public ICollection<string> words { get; set; }
+        public IList<string> sentences { get; set; }
+        public IList<string> words { get; set; }
 
-        public PatternHolder(string newPattern, ICollection<string> newSentences, ICollection<string> newWords)
-            : this()
+        public PatternHolder(string newPattern, IList<string> newSentences, IList<string> words)
+            :this()
         {
             this.pattern = newPattern;
             this.sentences = newSentences;
-            this.words = newWords;
+            this.words = words;
         }
     }
 }
