@@ -18,16 +18,14 @@ namespace PatternFind
                    RegexOptions.Singleline | RegexOptions.Compiled);
 
         /// <summary>
-        /// Iterates thtough all of the lines in the file and finds and stores the patterns
+        /// Iterates thtough all of the lines in the stream and finds and returns the patterns in the file
         /// </summary>
         /// <param name="path"></param>
-        public IEnumerable<PatternHolder> FindPatternsInFile(string path)
+        public IEnumerable<PatternHolder> FindPatternsInFile(Stream fileStream)
         {
-            using (var sr = File.OpenText(path))
+            using (var sr = new FileIterator(fileStream))
             {
-                string sentence = "";
-
-                while ((sentence = sr.ReadLine()) != null)
+                foreach (var sentence in sr.ReadLines())
                 {
                     var matchingPatterns = FindMatchingPatterns(sentence);
                     AddSenteceToPatterns(matchingPatterns, sentence);
@@ -145,7 +143,7 @@ namespace PatternFind
             // the sentence matches the pattern iff they have only one word that differs between them in the same location;
             var diffWordsIndex = FindDiffWord(patternHolder.pattern, sentence);
             var patternMatch = diffWordsIndex >= 0;
-                        
+
             return patternMatch;
         }
 
@@ -193,7 +191,7 @@ namespace PatternFind
         public IList<string> words { get; set; }
 
         public PatternHolder(string newPattern, IList<string> newSentences, IList<string> words)
-            :this()
+            : this()
         {
             this.pattern = newPattern;
             this.sentences = newSentences;

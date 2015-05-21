@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace PatternFind
@@ -15,30 +15,25 @@ namespace PatternFind
 
             var path = args[0];
             var patternFinder = new PatternFinder();
-
-            var patterns = patternFinder.FindPatternsInFile(path);
-            PrintPatterns(patterns);
-
-            Console.ReadKey();
-        }
-
-        /// <summary>
-        /// Prints the Patters to the console
-        /// </summary>
-        /// <param name="patterns">The foud patters and words.</param>
-        public static void PrintPatterns(IEnumerable<PatternHolder> patterns)
-        {
-            if (patterns.Any(patternHolder => patternHolder.sentences != null && patternHolder.sentences.Count > 0))
+            
+            using (var fileStream = new FileStream(path, FileMode.Open))
             {
-                foreach (var pattern in patterns)
+                var patterns = patternFinder.FindPatternsInFile(fileStream);
+                
+                if (patterns.Any(patternHolder => patternHolder.sentences != null && patternHolder.sentences.Count > 0))
                 {
-                    PrintPattern(pattern);
+                    foreach (var pattern in patterns)
+                    {
+                        PrintPattern(pattern);
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("No Patterns Found.");
                 }
             }
-            else
-            {
-                Console.WriteLine("No Patterns Found.");
-            }
+
+            Console.ReadKey();
         }
 
         /// <summary>
